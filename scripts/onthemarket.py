@@ -109,12 +109,3 @@ def crawl_onthemarket(url: str):
         url = BASE + url.get("href")
 
     return data
-
-
-if __name__ == "__main__":
-    import pandas as pd
-
-    URL = ""
-    data = crawl_onthemarket(URL)
-    df = pd.DataFrame.from_dict(data)
-    df.to_excel("onthemarket.xlsx")

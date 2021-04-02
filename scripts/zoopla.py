@@ -117,9 +117,9 @@ def get_page_data(soup):
     for article in articles:
         try:
             data = get_article_data(article)
+            results.append(data)
         except:
             print(f"SMTH WENT WRONG {article}")
-        results.append(data)
 
     return results
 
@@ -174,12 +174,3 @@ def crawl_zoopla(start_url: str):
             data[key] += [j[n] for j in results]
 
     return data
-
-
-if __name__ == "__main__":
-    import pandas as pd
-
-    URL = ""
-    data = crawl_zoopla(URL)
-    df = pd.DataFrame.from_dict(data)
-    df.to_excel("zoopla.xlsx")

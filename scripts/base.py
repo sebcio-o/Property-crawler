@@ -1,7 +1,8 @@
+from time import sleep
+
 from bs4 import BeautifulSoup
 from fake_headers import Headers
 from requests_html import HTMLSession
-from time import sleep
 
 headers = Headers(headers=True, os="win")
 session = HTMLSession()
