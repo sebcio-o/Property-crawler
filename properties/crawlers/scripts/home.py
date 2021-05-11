@@ -8,12 +8,15 @@ BASE = "https://www.home.co.uk/"
 
 def get_article_data(soup):
 
+    head_image = soup.select_one("img")
     price = soup.select_one(".property-listing__price")
     title = soup.select_one(".property-listing__type")
     address = soup.select_one(".house_link")
     description = soup.select_one(".property-listing__desc")
     key_features = soup.select(".property-listing__info li")
 
+    if head_image:
+        head_image = head_image.get("src")
     if price:
         price = price.text.strip()
         if "poa" in price.lower():
@@ -21,6 +24,8 @@ def get_article_data(soup):
         else:
             price = eval(re.sub(r"\D", "", price))
 
+    bedrooms = None
+    property_type = None
     if title:
         title = title.text.strip().lower()
         property_type = re.sub(
@@ -30,9 +35,6 @@ def get_article_data(soup):
             bedrooms = eval(re.sub(r"\D", "", title))
         elif "studio" in title:
             bedrooms = 1
-    else:
-        bedrooms = None
-        property_type = None
 
     if address:
         url = address.get("href")
@@ -52,6 +54,7 @@ def get_article_data(soup):
 
     return [
         url,
+        head_image,
         title,
         address,
         price,
@@ -83,7 +86,7 @@ def get_pages_number(soup):
         ".homeco_pr_content > p:nth-child(1) > span:nth-child(1)"
     )
     if results_number:
-        pages_number = int(results_number.text.strip().replace("\n", "")) / 10
+        pages_number = int(re.sub("\D", "", results_number.text)) / 10
         if pages_number % 10 != 0:
             pages_number += 1
         if pages_number > 50:
@@ -95,16 +98,7 @@ def get_pages_number(soup):
 
 def crawl_home(url: str):
 
-    data = {
-        "url": [],
-        "title": [],
-        "address": [],
-        "price": [],
-        "bedrooms": [],
-        "property_type": [],
-        "description": [],
-        "key_features": [],
-    }
+    data = []
 
     soup = request(url)
     number_of_pages = get_pages_number(soup)
@@ -113,9 +107,7 @@ def crawl_home(url: str):
 
         print(url)
 
-        results = get_page_data(soup)
-        for n, key in enumerate(data):
-            data[key] += [j[n] for j in results]
+        data += get_page_data(soup)
 
         if not url:
             break

@@ -1,0 +1,52 @@
+version: "3.8"
+services:
+  backend:
+    build: ./properties
+    command: python3 manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./properties:/backend
+    ports:
+      - 8000:8000
+    environment:
+      DB_NAME: properties
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: db
+      DEBUG: 1
+      ALLOWED_HOSTS: "*"
+      PYTHONUNBUFFERED: 1
+    depends_on:
+      - db
+      - redis
+  worker:
+    build: ./properties
+    command: celery -A properties worker -B -l info
+    volumes:
+      - /usr/local/etc:/root/.local/share/pyppeteer/local-chromium/588429
+    environment: &environment
+      DB_NAME: properties
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: db
+    depends_on:
+      - db
+      - redis
+      - backend
+  db:
+    image: "postgis/postgis:13-master"
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: properties
+      POSTGRES_PASSWORD: postgres
+  redis:
+    image: "redis:6.2.2-alpine"
+    expose:
+      - "6379"
+    ports:
+      - "6379:6379"
+volumes:
+  webdata:
+    external: true
+  postgresdata:
+    external: true

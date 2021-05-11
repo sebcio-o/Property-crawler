@@ -9,6 +9,7 @@ BASE = "https://nethouseprices.com"
 def get_article_data(soup):
 
     url_and_price = soup.select_one(".price-main a")
+    head_image = soup.select_one(".property_image_container img")
     title = soup.select_one(".price-desc a")
     address = soup.select_one(".price-address")
 
@@ -21,6 +22,8 @@ def get_article_data(soup):
             price = 0
         else:
             price = eval(re.sub(r"\D", "", url_and_price))
+    if head_image:
+        head_image = head_image.get("src")
     if title:
         title = title.text.strip()
     if address:
@@ -30,17 +33,18 @@ def get_article_data(soup):
 
     date = soup.select_one(".listing-image-elem.listing-date")
     agent_name = soup.select_one("table:nth-child(2) img:nth-child(1)")
-    agent_address = soup.select(
+    agent_address = soup.select_one(
         "table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > div:nth-child(1) p"
     )
     agent_phone = soup.select_one(
-        "div.content-section:nth-child(14) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > p:nth-child(4) > span:nth-child(3)"
+        "div.grid_4:nth-child(2) > div:nth-child(1) > div:nth-child(1) > p:nth-child(4) > span:nth-child(3)"
     )
     description = soup.select(".property-main-description p")
     key_features = soup.select(".double-arrow-list li")
+    stations = soup.select(".listing-elem:nth-child(2) .listing-image-elem")
 
     if date:
-        date = re.sub(r"(st|th|ed)", "", date.text.strip())
+        date = re.sub(r"(st|th|ed|rd|nd)", "", date.text.strip())
         date = datetime.strptime(date, "%d %B %Y")
     else:
         date = datetime.now()
@@ -49,14 +53,17 @@ def get_article_data(soup):
     if agent_phone:
         agent_phone = agent_phone.text
     if agent_address:
-        agent_address = "".join([i.text + " " for i in agent_address])
+        agent_address = agent_address.text.strip()
     if description:
         description = "".join([i.text + " " for i in description]).strip()
     if key_features:
         key_features = [i.text for i in key_features]
+    if stations:
+        stations = [i.text for i in stations]
 
     return [
         url,
+        head_image,
         title,
         address,
         price,
@@ -66,6 +73,7 @@ def get_article_data(soup):
         agent_address,
         description,
         key_features,
+        stations,
     ]
 
 
@@ -86,29 +94,17 @@ def get_page_data(soup):
 
 def crawl_nethouseprices(url: str):
 
-    data = {
-        "url": [],
-        "title": [],
-        "address": [],
-        "price": [],
-        "date": [],
-        "agent_name": [],
-        "agent_phone": [],
-        "agent_address": [],
-        "description": [],
-        "key_features": [],
-    }
+    data = []
 
     while True:
         soup = request(url)
-
-        results = get_page_data(soup)
-        for n, key in enumerate(data):
-            data[key] += [j[n] for j in results]
+        data += get_page_data(soup)
 
         url = soup.find(attrs={"title": "Next Page"})
         if not url:
             break
         url = "http:/" + url.get("href")[1::]
+
+        break
 
     return data

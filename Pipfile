@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "*"
+requests = "*"
+django-rest-framework = "*"
+celery = "*"
+requests-html = "*"
+fake-headers = "*"
+beautifulsoup4 = "*"
+psycopg2-binary = "*"
+redis = "*"
+django-cors-headers = "*"
+djangorestframework-simplejwt = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"

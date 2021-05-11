@@ -9,6 +9,7 @@ BASE = "https://www.rightmove.co.uk"
 def get_article_data(soup):
 
     url = soup.select_one(".propertyCard-link")
+    head_image = soup.select_one(".propertyCard-img img")
     title = soup.select_one(".propertyCard-title")
     price = soup.select_one(".propertyCard-priceValue")
     address = soup.select_one(".propertyCard-address")
@@ -20,6 +21,8 @@ def get_article_data(soup):
 
     if url:
         url = BASE + url.get("href")
+    if head_image:
+        head_image = head_image.get("src")
     if title:
         title = title.text.strip()
     if price:
@@ -41,6 +44,13 @@ def get_article_data(soup):
 
     soup = request(url)
 
+    agent_address = None
+    key_features = None
+    description = None
+    property_type = None
+    bedrooms = None
+    bathrooms = None
+    sqft = None
     if "/properties/" in url:
         main_informations = soup.select("._1u12RxIYGx3c84eaGxI6_b")
         agent_address = soup.select_one(".OojFk4MTxFDKIfqreGNt0")
@@ -66,18 +76,11 @@ def get_article_data(soup):
                 i.text for i in key_features.select(".lIhZ24u1NHMa5Y6gDH90A")
             ]
         if description:
-            description = description.text.strip().replace("\n", "").replace("<br>", "")
-    else:
-        agent_address = None
-        key_features = None
-        description = None
-        property_type = None
-        bedrooms = None
-        bathrooms = None
-        sqft = None
+            description = description.text.strip()
 
     return [
         url,
+        head_image,
         title,
         address,
         price,
@@ -125,40 +128,16 @@ def get_page_number(soup):
 
 def crawl_rightmove(start_url: str):
 
-    data = {
-        "url": [],
-        "title": [],
-        "address": [],
-        "price": [],
-        "date_published": [],
-        "agent_name": [],
-        "agent_phone": [],
-        "agent_address": [],
-        "property_type": [],
-        "bedrooms": [],
-        "bathrooms": [],
-        "sqft": [],
-        "key_features": [],
-        "description": [],
-    }
+    data = []
 
     soup = request(start_url)
+    data += get_page_data(soup)
     page_number = get_page_number(soup)
-
-    results = get_page_data(soup)
-    for n, key in enumerate(data):
-        data[key] += [j[n] for j in results]
 
     for i in range(1, page_number + 1):
 
         url = f"{start_url}&index={i*24}"
         soup = request(url)
-
-        results = get_page_data(soup)
-        for n, key in enumerate(data):
-            data[key] += [j[n] for j in results]
-
-        if page_number == 5:
-            break
+        data += get_page_data(soup)
 
     return data

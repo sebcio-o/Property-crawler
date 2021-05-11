@@ -41,13 +41,16 @@ def get_article_data(soup):
         agent_address = [i + " " for i in agent_address]
     if listing_history_dates and listing_history_values:
         listing_history = [
-            [i.text, j.text]
+            [i.text, int(re.sub(r"\D", "", j.text))]
             for i, j in zip(listing_history_dates, listing_history_values)
         ]
-
+        price = listing_history_values[0]
+    else:
+        price = None
     return [
         url,
         title,
+        price,
         address,
         agent_name,
         agent_phone,
@@ -75,28 +78,17 @@ def get_page_data(soup):
 
 def crawl_nethouseprices_archive(url: str):
 
-    data = {
-        "url": [],
-        "title": [],
-        "address": [],
-        "agent_name": [],
-        "agent_phone": [],
-        "agent_address": [],
-        "description": [],
-        "key_features": [],
-        "listing_history": [],
-    }
+    data = []
 
     while True:
         soup = request(url)
-
-        results = get_page_data(soup)
-        for n, key in enumerate(data):
-            data[key] += [j[n] for j in results]
+        data += get_page_data(soup)
 
         url = soup.find(attrs={"title": "Next Page"})
         if not url:
             break
         url = "http:/" + url.get("href")[1::]
+
+        break
 
     return data

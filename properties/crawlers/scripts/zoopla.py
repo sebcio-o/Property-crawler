@@ -5,41 +5,46 @@ from .base import request
 
 BASE = "https://www.zoopla.co.uk"
 
+PROPERTY_TYPES = {
+    "setached house",
+    "semi-detached house",
+    "terraced house",
+    "bungalow",
+    "detached bungalow",
+    "semi-detached bungalow",
+    "terraced bungalow",
+    "cottage",
+    "mobile/park home",
+    "flat",
+    "farm",
+    "land",
+}
+
 
 def get_article_data(soup):
 
-    url = soup.select_one(".e2uk8e4.css-gl9725-StyledLink-Link-FullCardLink.e33dvwd0")
-    title = soup.select_one(".css-c7hd0c-Heading2-StyledAddress.e2uk8e14")
-    price = soup.select_one(".css-18tfumg-Text.eczcs4p0")
-    address = soup.select_one(".css-wfe1rf-Text.eczcs4p0")
-    date = soup.select_one(".css-19cu4sz-Text.eczcs4p0")
-    main_informations = soup.select(
-        ".css-58bgfg-WrapperFeatures.e2uk8e15 .ejjz7ko0.css-l6ka86-Wrapper-IconAndText.e3e3fzo1"
+    url = soup.select_one(".e2uk8e4.e33dvwd0")
+    head_image = soup.select_one(
+        ".e2uk8e1.css-v3r7g4-StyledImg-Image-CustomStyledImage.e1kasqha0"
     )
+    title = soup.select_one(".css-qwtjnc-Heading2-StyledAddress.e2uk8e14")
+    price = soup.select_one(".css-6v9gpl-Text.eczcs4p0")
+    address = soup.select_one(".css-3hse11-Text.eczcs4p0")
+    date = soup.select_one(".css-1xux213-Text.eczcs4p0")
+    main_informations = soup.select(".css-58bgfg-WrapperFeatures.e2uk8e15")
 
     if url:
         url = BASE + url.get("href")
         identifier_index = url.find("?search_identifier")
-        url = url[:identifier_index]
+        if identifier_index != -1:
+            url = url[:identifier_index]
+    if head_image:
+        head_image = head_image.get("src")
 
     property_type = None
     if title:
         title = title.text.strip()
-        types_of_house = {
-            "setached house",
-            "semi-detached house",
-            "terraced house",
-            "bungalow",
-            "detached bungalow",
-            "semi-detached bungalow",
-            "terraced bungalow",
-            "cottage",
-            "mobile/park home",
-            "flat",
-            "farm",
-            "land",
-        }
-        for el in types_of_house:
+        for el in PROPERTY_TYPES:
             if el in title.lower():
                 property_type = el
                 break
@@ -75,15 +80,17 @@ def get_article_data(soup):
     key_features = soup.select(".e1q7jq6s2 li")
     description = soup.select_one(".e13tdjjp0 span")
     agent_name = soup.select_one(".e11937k16")
-    agent_phone = soup.select_one(".css-kqgjri-StyledLink-Link-AgentNumber")
+    agent_phone = soup.select_one(
+        ".e11937k18.css-v1mvgf-StyledLink-Link-AgentNumber.e33dvwd0"
+    )
     agent_address = soup.select_one(".e11937k19")
 
     if key_features:
         key_features = [i.text for i in key_features]
     if description:
-        description = description.text.strip().replace("<br>", "").replace("\n", "")
+        description = description.text.strip()
     if agent_name:
-        agent_name = agent_name.text.strip()
+        agent_name = agent_name.find(text=True).strip()
     if agent_phone:
         agent_phone = agent_phone.get("href").replace("tel:", "")
     if agent_address:
@@ -91,6 +98,7 @@ def get_article_data(soup):
 
     return [
         url,
+        head_image,
         title,
         address,
         price,
@@ -110,23 +118,21 @@ def get_article_data(soup):
 def get_page_data(soup):
 
     results = []
-    articles = soup.select(
-        ".earci3d1.css-tk5q7b-Wrapper-ListingCard-StyledListingCard.e2uk8e10"
-    )
+    articles = soup.select(".e2uk8e10")
 
     for article in articles:
         try:
             data = get_article_data(article)
             results.append(data)
-        except:
-            print(f"SMTH WENT WRONG {article}")
+        except Exception as e:
+            print("WENT WRONG", e)
 
     return results
 
 
 def get_page_number(soup):
 
-    result_count = soup.select_one(".css-1pereb3-Text-SearchResultsTotalText.egjkayq7")
+    result_count = soup.select_one(".egjkayq7")
     number_of_pages = int(result_count.text.replace(" results", "").replace("+", ""))
     page_number = number_of_pages // 25
 
@@ -140,28 +146,10 @@ def get_page_number(soup):
 
 def crawl_zoopla(start_url: str):
 
-    data = {
-        "url": [],
-        "title": [],
-        "address": [],
-        "price": [],
-        "date": [],
-        "agent_name": [],
-        "agent_phone": [],
-        "agent_address": [],
-        "property_type": [],
-        "bedrooms": [],
-        "bathrooms": [],
-        "receptionrooms": [],
-        "key_features": [],
-        "description": [],
-    }
+    data = []
 
     soup = request(start_url)
-    results = get_page_data(soup)
-    for n, key in enumerate(data):
-        data[key] += [j[n] for j in results]
-
+    data += get_page_data(soup)
     page_number = get_page_number(soup)
 
     for i in range(2, page_number + 1):
@@ -169,8 +157,6 @@ def crawl_zoopla(start_url: str):
         url = f"{start_url}&pn={i}"
         soup = request(url)
 
-        results = get_page_data(soup)
-        for n, key in enumerate(data):
-            data[key] += [j[n] for j in results]
+        data += get_page_data(soup)
 
     return data
