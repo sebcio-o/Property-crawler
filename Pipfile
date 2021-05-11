@@ -15,6 +15,7 @@ psycopg2-binary = "*"
 redis = "*"
 django-cors-headers = "*"
 djangorestframework-simplejwt = "*"
+gunicorn = "*"
 
 [dev-packages]
 

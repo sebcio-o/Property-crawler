@@ -1,18 +1,29 @@
 version: "3.8"
 services:
+  nginx:
+    build: nginx
+    volumes:
+      - ./nginx:/nginx
+      - static_volume:/backend/static
+    ports:
+      - 1337:80
+    depends_on:
+      - backend
   backend:
     build: ./properties
-    command: python3 manage.py runserver 0.0.0.0:8000
+    command: gunicorn properties.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - ./properties:/backend
+      - static_volume:/backend/static
+      - /usr/local/etc:/root/.local/share/pyppeteer/local-chromium/
     ports:
-      - 8000:8000
+      - "8000:8000"
     environment:
       DB_NAME: properties
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_HOST: db
-      DEBUG: 1
+      DEBUG:
       ALLOWED_HOSTS: "*"
       PYTHONUNBUFFERED: 1
     depends_on:
@@ -22,7 +33,8 @@ services:
     build: ./properties
     command: celery -A properties worker -B -l info
     volumes:
-      - /usr/local/etc:/root/.local/share/pyppeteer/local-chromium/588429
+      - ./properties:/backend
+      - /usr/local/etc:/root/.local/share/pyppeteer/local-chromium/
     environment: &environment
       DB_NAME: properties
       DB_USER: postgres
@@ -46,7 +58,5 @@ services:
     ports:
       - "6379:6379"
 volumes:
-  webdata:
-    external: true
+  static_volume:
   postgresdata:
-    external: true

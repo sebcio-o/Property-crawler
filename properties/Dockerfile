@@ -17,6 +17,4 @@ ADD requirements.txt ./
 RUN pip3 install --upgrade pip setuptools
 RUN pip3 install --requirement requirements.txt
 
-RUN python3 init.py
-
-COPY . .
+CMD [ "python init.py" ] 
