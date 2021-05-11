@@ -11,7 +11,9 @@ services:
       - backend
   backend:
     build: ./properties
-    command: gunicorn properties.wsgi:application --bind 0.0.0.0:8000
+    command: >
+      sh -c "python3 init.py && 
+            gunicorn properties.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - ./properties:/backend
       - static_volume:/backend/static

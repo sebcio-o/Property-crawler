@@ -16,5 +16,3 @@ WORKDIR /backend
 ADD requirements.txt ./
 RUN pip3 install --upgrade pip setuptools
 RUN pip3 install --requirement requirements.txt
-
-CMD [ "python init.py" ] 
