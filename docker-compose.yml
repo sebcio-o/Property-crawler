@@ -6,7 +6,7 @@ services:
       - ./nginx:/nginx
       - static_volume:/backend/static
     ports:
-      - 81:80
+      - 80:80
     depends_on:
       - backend
   backend:
