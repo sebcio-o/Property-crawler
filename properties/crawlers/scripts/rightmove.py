@@ -121,7 +121,7 @@ def get_page_number(soup):
     if number_of_pages / 24 % 1 != 0:
         page_number += 1
     if page_number > 42:
-        page_number = 42
+        page_number = 41
 
     return page_number
 
@@ -134,7 +134,7 @@ def crawl_rightmove(start_url: str):
     data += get_page_data(soup)
     page_number = get_page_number(soup)
 
-    for i in range(1, page_number + 1):
+    for i in range(0, page_number + 1):
 
         url = f"{start_url}&index={i*24}"
         soup = request(url)
