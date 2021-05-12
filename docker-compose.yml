@@ -6,7 +6,7 @@ services:
       - ./nginx:/nginx
       - static_volume:/backend/static
     ports:
-      - 80:80
+      - 81:80
     depends_on:
       - backend
   backend:
@@ -50,6 +50,8 @@ services:
     image: "postgis/postgis:13-master"
     volumes:
       - postgresdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
     environment:
       POSTGRES_DB: properties
       POSTGRES_PASSWORD: postgres
